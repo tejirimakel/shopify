@@ -5,7 +5,7 @@ export function CartIndicator({ count = 0 }: { count?: number }) {
     <Link
       href="/cart"
       aria-label={`View cart, ${count} item${count === 1 ? "" : "s"}`}
-      className="relative flex h-9 w-9 items-center justify-center rounded-md text-text transition-colors hover:bg-surface hover:text-primary"
+      className="relative flex h-11 w-11 items-center justify-center rounded-md text-text transition-colors hover:bg-surface hover:text-primary"
     >
       <svg
         aria-hidden="true"

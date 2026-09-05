@@ -57,9 +57,14 @@ export function CartLineRow({
                 </p>
               )}
             </div>
-            <p className="text-sm font-medium text-text">
-              {formatMoney(line.cost.totalAmount)}
-            </p>
+            <div className="text-right">
+              <p className="text-sm font-medium text-text">
+                {formatMoney(line.cost.totalAmount)}
+              </p>
+              <p className="text-xs text-text/60">
+                {formatMoney(line.merchandise.price)} each
+              </p>
+            </div>
           </div>
 
           <div className="flex items-center justify-between">
@@ -70,7 +75,7 @@ export function CartLineRow({
                   aria-label={line.quantity === 1 ? "Remove item" : "Decrease quantity"}
                   disabled={disabled}
                   onClick={() => onUpdate(line.id, line.quantity - 1)}
-                  className="flex h-8 w-8 items-center justify-center text-text disabled:opacity-50"
+                  className="flex h-11 w-11 items-center justify-center text-text disabled:opacity-50"
                 >
                   −
                 </button>
@@ -82,7 +87,7 @@ export function CartLineRow({
                   aria-label="Increase quantity"
                   disabled={disabled}
                   onClick={() => onUpdate(line.id, line.quantity + 1)}
-                  className="flex h-8 w-8 items-center justify-center text-text disabled:opacity-50"
+                  className="flex h-11 w-11 items-center justify-center text-text disabled:opacity-50"
                 >
                   +
                 </button>
