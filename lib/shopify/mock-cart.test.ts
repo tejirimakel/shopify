@@ -1,17 +1,15 @@
 import { rm } from "fs/promises";
-import path from "path";
 
 import { beforeEach, describe, expect, it } from "vitest";
 
 import {
   MockCartError,
+  STORE_PATH,
   mockAddLines,
   mockCreateCart,
   mockRemoveLines,
   mockUpdateLines,
 } from "./mock-cart";
-
-const MOCK_CART_STORE = path.join(process.cwd(), ".tmp", "mock-carts.json");
 
 // Real ids from lib/shopify/mock-data.ts.
 const TOTE_VARIANT_ID = "gid://shopify/ProductVariant/mock-1-1"; // Canvas Tote Bag, $24.00
@@ -21,7 +19,7 @@ const UNKNOWN_VARIANT_ID = "gid://shopify/ProductVariant/does-not-exist";
 const UNKNOWN_CART_ID = "mock-cart-does-not-exist";
 
 beforeEach(async () => {
-  await rm(MOCK_CART_STORE, { force: true });
+  await rm(STORE_PATH, { force: true });
 });
 
 describe("mockAddLines", () => {

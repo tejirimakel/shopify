@@ -1,9 +1,8 @@
 import { rm } from "fs/promises";
-import path from "path";
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const MOCK_CART_STORE = path.join(process.cwd(), ".tmp", "mock-carts.json");
+import { STORE_PATH } from "./mock-cart";
 
 const cookieJar = new Map<string, string>();
 
@@ -33,7 +32,7 @@ const MOCK_ADDON_VARIANT_ID = "gid://shopify/ProductVariant/mock-addon-rice-1";
 describe("cart-actions flow (mock mode)", () => {
   beforeEach(async () => {
     cookieJar.clear();
-    await rm(MOCK_CART_STORE, { force: true });
+    await rm(STORE_PATH, { force: true });
   });
 
   it("adds to cart, increments quantity, then removes the line", async () => {

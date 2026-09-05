@@ -14,7 +14,17 @@ import {
 // plain in-memory module cache survives across route handlers / server
 // components within the same request lifecycle. Persisting to a scratch
 // file (see AGENTS.md's .tmp/ convention) keeps cart state consistent.
-const STORE_PATH = path.join(process.cwd(), ".tmp", "mock-carts.json");
+//
+// Scoped by VITEST_WORKER_ID (set automatically by Vitest, unset otherwise)
+// so test files that exercise this store don't race on the same file when
+// Vitest runs multiple files in parallel — each worker gets its own store.
+export const STORE_PATH = path.join(
+  process.cwd(),
+  ".tmp",
+  process.env.VITEST_WORKER_ID
+    ? `mock-carts.${process.env.VITEST_WORKER_ID}.json`
+    : "mock-carts.json"
+);
 
 async function readStore(): Promise<Record<string, Cart>> {
   try {

@@ -40,6 +40,11 @@ function fakeResponse(
   };
 }
 
+/** Stubs global fetch to resolve with a fake HTTP response carrying `body`. */
+function stubFetchResolved(body: unknown, init?: { ok?: boolean; status?: number }) {
+  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(fakeResponse(body, init)));
+}
+
 function rawImage(seed: string) {
   return { url: `https://example.com/${seed}.jpg`, altText: seed, width: 10, height: 10 };
 }
@@ -171,10 +176,7 @@ describe("shopifyFetch error handling (via getProducts)", () => {
   });
 
   it("throws ShopifyApiError on a non-2xx HTTP response", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(fakeResponse({}, { ok: false, status: 500 }))
-    );
+    stubFetchResolved({}, { ok: false, status: 500 });
 
     const error = await getProducts().catch((e) => e);
     expect(error).toBeInstanceOf(ShopifyApiError);
@@ -182,12 +184,7 @@ describe("shopifyFetch error handling (via getProducts)", () => {
   });
 
   it("throws ShopifyApiError when the GraphQL response carries an errors array", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({ errors: [{ message: "Field 'foo' doesn't exist" }] })
-      )
-    );
+    stubFetchResolved({ errors: [{ message: "Field 'foo' doesn't exist" }] });
 
     const error = await getProducts().catch((e) => e);
     expect(error).toBeInstanceOf(ShopifyApiError);
@@ -195,7 +192,7 @@ describe("shopifyFetch error handling (via getProducts)", () => {
   });
 
   it("throws ShopifyApiError when the response has no data field", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(fakeResponse({})));
+    stubFetchResolved({});
 
     const error = await getProducts().catch((e) => e);
     expect(error).toBeInstanceOf(ShopifyApiError);
@@ -205,12 +202,7 @@ describe("shopifyFetch error handling (via getProducts)", () => {
 
 describe("normalizeProduct (via getProducts / getProduct)", () => {
   it("flattens image and variant connections into flat arrays", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({ data: { products: { edges: [{ node: rawProduct() }] } } })
-      )
-    );
+    stubFetchResolved({ data: { products: { edges: [{ node: rawProduct() }] } } });
 
     const products = await getProducts();
     expect(products).toHaveLength(1);
@@ -225,16 +217,11 @@ describe("normalizeProduct (via getProducts / getProduct)", () => {
       ...rawVariant("gid://shopify/ProductVariant/addon-1", "2.00"),
       product: { title: "Extra Rice" },
     };
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: {
-            product: rawProduct({ addons: { references: { nodes: [addonNode] } } }),
-          },
-        })
-      )
-    );
+    stubFetchResolved({
+      data: {
+        product: rawProduct({ addons: { references: { nodes: [addonNode] } } }),
+      },
+    });
 
     const product = await getProduct("test-product");
     expect(product?.addons).toEqual([
@@ -243,22 +230,14 @@ describe("normalizeProduct (via getProducts / getProduct)", () => {
   });
 
   it("defaults addons to an empty array when the addons field is null", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({ data: { product: rawProduct({ addons: null }) } })
-      )
-    );
+    stubFetchResolved({ data: { product: rawProduct({ addons: null }) } });
 
     const product = await getProduct("test-product");
     expect(product?.addons).toEqual([]);
   });
 
   it("returns null from getProduct when data.product is null", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(fakeResponse({ data: { product: null } }))
-    );
+    stubFetchResolved({ data: { product: null } });
 
     await expect(getProduct("missing")).resolves.toBeNull();
   });
@@ -284,14 +263,7 @@ describe("normalizeCart (via createCart / getCart)", () => {
       parentId: "line-parent",
     });
 
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: { cart: rawCart([parent, child]) },
-        })
-      )
-    );
+    stubFetchResolved({ data: { cart: rawCart([parent, child]) } });
 
     const cart = await getCart("gid://shopify/Cart/1");
     const normalizedParent = cart?.lines.find((l) => l.id === "line-parent");
@@ -306,101 +278,55 @@ describe("normalizeCart (via createCart / getCart)", () => {
   });
 
   it("returns null from getCart when data.cart is null (no exception thrown)", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(fakeResponse({ data: { cart: null } }))
-    );
+    stubFetchResolved({ data: { cart: null } });
 
     await expect(getCart("gid://shopify/Cart/missing")).resolves.toBeNull();
   });
 });
 
 describe("mutation userErrors handling", () => {
-  it("createCart throws ShopifyApiError when cartCreate.userErrors is non-empty", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: {
-            cartCreate: {
-              cart: rawCart([]),
-              userErrors: [{ message: "Something went wrong" }],
-            },
-          },
-        })
-      )
-    );
+  it.each([
+    {
+      name: "createCart",
+      field: "cartCreate",
+      message: "Something went wrong",
+      call: () => createCart(),
+    },
+    {
+      name: "addCartLines",
+      field: "cartLinesAdd",
+      message: "Variant not available",
+      call: () =>
+        addCartLines("gid://shopify/Cart/1", [
+          { merchandiseId: "gid://shopify/ProductVariant/1", quantity: 1 },
+        ]),
+    },
+    {
+      name: "updateCartLines",
+      field: "cartLinesUpdate",
+      message: "Line item quantity must be positive",
+      call: () => updateCartLines("gid://shopify/Cart/1", [{ id: "line-1", quantity: 2 }]),
+    },
+    {
+      name: "removeCartLines",
+      field: "cartLinesRemove",
+      message: "Line does not exist",
+      call: () => removeCartLines("gid://shopify/Cart/1", ["line-1"]),
+    },
+  ])(
+    "$name throws ShopifyApiError when $field.userErrors is non-empty",
+    async ({ field, message, call }) => {
+      stubFetchResolved({
+        data: {
+          [field]: { cart: rawCart([]), userErrors: [{ message }] },
+        },
+      });
 
-    const error = await createCart().catch((e) => e);
-    expect(error).toBeInstanceOf(ShopifyApiError);
-    expect(error.message).toContain("Something went wrong");
-  });
-
-  it("addCartLines throws ShopifyApiError when cartLinesAdd.userErrors is non-empty", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: {
-            cartLinesAdd: {
-              cart: rawCart([]),
-              userErrors: [{ message: "Variant not available" }],
-            },
-          },
-        })
-      )
-    );
-
-    const error = await addCartLines("gid://shopify/Cart/1", [
-      { merchandiseId: "gid://shopify/ProductVariant/1", quantity: 1 },
-    ]).catch((e) => e);
-    expect(error).toBeInstanceOf(ShopifyApiError);
-    expect(error.message).toContain("Variant not available");
-  });
-
-  it("updateCartLines throws ShopifyApiError when cartLinesUpdate.userErrors is non-empty", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: {
-            cartLinesUpdate: {
-              cart: rawCart([]),
-              userErrors: [{ message: "Line item quantity must be positive" }],
-            },
-          },
-        })
-      )
-    );
-
-    const error = await updateCartLines("gid://shopify/Cart/1", [
-      { id: "line-1", quantity: 2 },
-    ]).catch((e) => e);
-    expect(error).toBeInstanceOf(ShopifyApiError);
-    expect(error.message).toContain("Line item quantity must be positive");
-  });
-
-  it("removeCartLines throws ShopifyApiError when cartLinesRemove.userErrors is non-empty", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(
-        fakeResponse({
-          data: {
-            cartLinesRemove: {
-              cart: rawCart([]),
-              userErrors: [{ message: "Line does not exist" }],
-            },
-          },
-        })
-      )
-    );
-
-    const error = await removeCartLines("gid://shopify/Cart/1", ["line-1"]).catch(
-      (e) => e
-    );
-    expect(error).toBeInstanceOf(ShopifyApiError);
-    expect(error.message).toContain("Line does not exist");
-  });
+      const error = await call().catch((e) => e);
+      expect(error).toBeInstanceOf(ShopifyApiError);
+      expect(error.message).toContain(message);
+    }
+  );
 });
 
 describe("getCart's catch behavior", () => {
@@ -417,10 +343,7 @@ describe("getCart's catch behavior", () => {
   });
 
   it("swallows a genuine ShopifyApiError (e.g. a non-2xx response) into null", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockResolvedValue(fakeResponse({}, { ok: false, status: 500 }))
-    );
+    stubFetchResolved({}, { ok: false, status: 500 });
 
     await expect(getCart("gid://shopify/Cart/1")).resolves.toBeNull();
   });
