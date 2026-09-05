@@ -59,6 +59,22 @@ export class ShopifyConfigError extends Error {
   }
 }
 
+/**
+ * Validates that the required Shopify environment variables are present,
+ * throwing ShopifyConfigError otherwise. Call sites that need to detect a
+ * missing configuration up front (e.g. before a code path that might
+ * otherwise skip calling Shopify entirely, like a cart lookup with no
+ * existing cart id) can call this directly instead of relying on it being
+ * thrown incidentally from inside shopifyFetch.
+ */
+export function assertShopifyConfigured(): void {
+  if (USE_MOCK_DATA) {
+    return;
+  }
+  getStoreDomain();
+  getStorefrontToken();
+}
+
 export class ShopifyApiError extends Error implements ShopifyErrorLike {
   status: number;
   cause?: unknown;
@@ -241,7 +257,13 @@ export async function getCart(cartId: string): Promise<Cart | null> {
       cartId,
     });
     return data.cart ? normalizeCart(data.cart) : null;
-  } catch {
+  } catch (error) {
+    // A missing environment variable is a real configuration problem, not
+    // a stale cart id — let it propagate so callers can surface a clear
+    // configuration error instead of silently rendering an empty cart.
+    if (error instanceof ShopifyConfigError) {
+      throw error;
+    }
     // A stale, expired, or malformed cart id (e.g. left over from a
     // different backend or an old session) is not a real failure — it
     // just means there's no usable cart, which callers already handle.

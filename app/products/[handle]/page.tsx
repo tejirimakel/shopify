@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { ConfigErrorNotice } from "@/components/ConfigErrorNotice";
 import { ProductImage } from "@/components/products/ProductImage";
 import { ProductOptions } from "@/components/products/ProductOptions";
-import { getProduct } from "@/lib/shopify/client";
+import { ShopifyConfigError, getProduct } from "@/lib/shopify/client";
 
 type ProductPageProps = {
   params: Promise<{ handle: string }>;
@@ -13,21 +14,41 @@ export async function generateMetadata({
   params,
 }: ProductPageProps): Promise<Metadata> {
   const { handle } = await params;
-  const product = await getProduct(handle);
 
-  if (!product) {
-    return { title: "Product not found" };
+  try {
+    const product = await getProduct(handle);
+
+    if (!product) {
+      return { title: "Product not found" };
+    }
+
+    return {
+      title: product.title,
+      description: product.description,
+    };
+  } catch {
+    // Don't let a metadata failure preempt the page body's own error
+    // handling below (which distinguishes config vs. API errors) — fall
+    // back to a generic title and let the page body render the real UI.
+    return { title: "Product" };
   }
-
-  return {
-    title: product.title,
-    description: product.description,
-  };
 }
 
 export default async function ProductPage({ params }: ProductPageProps) {
   const { handle } = await params;
-  const product = await getProduct(handle);
+
+  let product;
+  try {
+    product = await getProduct(handle);
+  } catch (error) {
+    // See app/products/page.tsx for why this check has to happen here
+    // (server-side, before crossing into a client error boundary) rather
+    // than in app/products/error.tsx.
+    if (error instanceof ShopifyConfigError) {
+      return <ConfigErrorNotice />;
+    }
+    throw error;
+  }
 
   if (!product) {
     notFound();
