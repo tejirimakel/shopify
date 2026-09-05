@@ -144,24 +144,14 @@ describe("ShopifyConfigError", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
-  // NOTE: this documents the *actual* current behavior, which is arguably a
-  // bug — see the bug flagged in the task report. getStorefrontToken() is
-  // called from inside the headers object passed to fetch(), and that whole
-  // call sits inside shopifyFetch's try/catch around the network request.
-  // So a ShopifyConfigError thrown here gets caught by that catch and
-  // rewrapped into a generic ShopifyApiError instead of propagating as
-  // ShopifyConfigError (unlike the missing-domain case above, where
-  // getStoreDomain() is called before the try block).
-  it("wraps a missing SHOPIFY_STOREFRONT_ACCESS_TOKEN into a ShopifyApiError instead of surfacing ShopifyConfigError", async () => {
+  it("is thrown instead of calling fetch when SHOPIFY_STOREFRONT_ACCESS_TOKEN is unset", async () => {
     delete process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN;
     const fetchSpy = vi.fn(() =>
       Promise.reject(new Error("fetch should not have been called"))
     );
     vi.stubGlobal("fetch", fetchSpy);
 
-    const error = await getProducts().catch((e) => e);
-    expect(error).toBeInstanceOf(ShopifyApiError);
-    expect(error.cause).toBeInstanceOf(ShopifyConfigError);
+    await expect(getProducts()).rejects.toBeInstanceOf(ShopifyConfigError);
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });

@@ -105,6 +105,7 @@ async function shopifyFetch<T>(
   options?: ShopifyFetchOptions
 ): Promise<T> {
   const endpoint = `${getStoreDomain()}/api/${API_VERSION}/graphql.json`;
+  const storefrontToken = getStorefrontToken();
 
   let response: Response;
   try {
@@ -112,7 +113,7 @@ async function shopifyFetch<T>(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-Shopify-Storefront-Access-Token": getStorefrontToken(),
+        "X-Shopify-Storefront-Access-Token": storefrontToken,
       },
       body: JSON.stringify({ query, variables }),
       ...(options?.revalidateSeconds !== undefined
