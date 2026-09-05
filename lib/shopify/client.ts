@@ -264,9 +264,12 @@ export async function getCart(cartId: string): Promise<Cart | null> {
     if (error instanceof ShopifyConfigError) {
       throw error;
     }
-    // A stale, expired, or malformed cart id (e.g. left over from a
-    // different backend or an old session) is not a real failure — it
-    // just means there's no usable cart, which callers already handle.
+    // Anything else — a stale/expired/malformed cart id, or a genuine
+    // Shopify API failure (network error, non-2xx, GraphQL error) — is
+    // deliberately swallowed here rather than surfaced. Callers treat a
+    // missing cart as "no usable cart yet" and degrade to an empty-cart
+    // UI rather than a hard error page, even when the underlying cause
+    // was a real outage rather than a stale id.
     return null;
   }
 }
