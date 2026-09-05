@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WordPress → Next.js + Shopify Migration
 
-## Getting Started
+## Overview
 
-First, run the development server:
+Proof-of-concept migration of a WordPress/WooCommerce
+storefront to a headless Next.js application backed by Shopify.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Objective
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Demonstrate the architecture and implementation approach
+for migrating a WordPress commerce experience to:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Next.js App Router
+- TypeScript
+- Shopify Storefront API
+- React Server Components
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Migration Scope
 
-## Learn More
+For demonstration purposes, eight products were migrated
+from the existing WordPress/WooCommerce environment.
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+WordPress/WooCommerce
+        ↓
+Product Export
+        ↓
+Data Transformation
+        ↓
+Shopify
+        ↓
+Storefront API
+        ↓
+Next.js App Router
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Features
 
-## Deploy on Vercel
+- Product listing
+- Dynamic product pages
+- Shopify Storefront API integration
+- Product image optimization
+- Shopify cart
+- Shopify checkout
+- Dynamic SEO metadata
+- Loading states
+- Not-found handling
+- Responsive UI
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Migration Decisions
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+used shopify inbuilt data importer for syncing products and credentials from woo commerce in csv format
