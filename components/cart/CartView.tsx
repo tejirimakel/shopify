@@ -1,89 +1,61 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useTransition } from "react";
+import { useOptimistic, useState, useTransition } from "react";
 
 import { removeCartLine, updateCartLineQuantity } from "@/lib/shopify/cart-actions";
-import type { Cart, CartLine } from "@/lib/shopify/types";
+import type { Cart } from "@/lib/shopify/types";
 
 import { CartLineGroup } from "./CartLineGroup";
+import { groupLines, reduceLines } from "./cart-line-utils";
 import { CartSummary } from "./CartSummary";
 
-type Action =
-  | { type: "update"; lineId: string; quantity: number }
-  | { type: "remove"; lineIds: string[] };
+/** Per-line error messages, keyed by cart line id. */
+type LineErrors = Record<string, string>;
 
-function reduceLines(lines: CartLine[], action: Action): CartLine[] {
-  switch (action.type) {
-    case "update":
-      return lines.map((line) =>
-        line.id === action.lineId
-          ? {
-              ...line,
-              quantity: action.quantity,
-              cost: {
-                totalAmount: {
-                  amount: (
-                    Number(line.merchandise.price.amount) * action.quantity
-                  ).toFixed(2),
-                  currencyCode: line.merchandise.price.currencyCode,
-                },
-              },
-            }
-          : line
-      );
-    case "remove":
-      return lines.filter((line) => !action.lineIds.includes(line.id));
+function withoutErrorsFor(errors: LineErrors, lineIds: string[]): LineErrors {
+  if (lineIds.every((id) => !(id in errors))) {
+    return errors;
   }
-}
-
-type LineGroup = { parent: CartLine; children: CartLine[] };
-
-function groupLines(lines: CartLine[]): LineGroup[] {
-  const childrenByParentId = new Map<string, CartLine[]>();
-  for (const line of lines) {
-    if (line.parentLineId) {
-      childrenByParentId.set(line.parentLineId, [
-        ...(childrenByParentId.get(line.parentLineId) ?? []),
-        line,
-      ]);
-    }
+  const next = { ...errors };
+  for (const id of lineIds) {
+    delete next[id];
   }
-
-  const knownIds = new Set(lines.map((line) => line.id));
-  const groups: LineGroup[] = [];
-  for (const line of lines) {
-    if (line.parentLineId === null) {
-      groups.push({ parent: line, children: childrenByParentId.get(line.id) ?? [] });
-    } else if (!knownIds.has(line.parentLineId)) {
-      // Orphaned child (its parent line isn't present in this cart) — render
-      // it standalone rather than silently hiding it.
-      groups.push({ parent: line, children: [] });
-    }
-  }
-  return groups;
+  return next;
 }
 
 export function CartView({ cart }: { cart: Cart }) {
   const [optimisticLines, applyOptimistic] = useOptimistic(cart.lines, reduceLines);
   const [isPending, startTransition] = useTransition();
+  const [errors, setErrors] = useState<LineErrors>({});
 
   function handleUpdate(lineId: string, quantity: number, cascadeIds: string[] = []) {
+    setErrors((prev) => withoutErrorsFor(prev, [lineId, ...cascadeIds]));
     startTransition(async () => {
       if (quantity <= 0) {
         applyOptimistic({ type: "remove", lineIds: [lineId, ...cascadeIds] });
-        await removeCartLine(lineId, cascadeIds);
+        const result = await removeCartLine(lineId, cascadeIds);
+        if (!result.success) {
+          setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+        }
         return;
       }
       applyOptimistic({ type: "update", lineId, quantity });
-      await updateCartLineQuantity(lineId, quantity, cascadeIds);
+      const result = await updateCartLineQuantity(lineId, quantity, cascadeIds);
+      if (!result.success) {
+        setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+      }
     });
   }
 
   function handleRemove(lineId: string, cascadeIds: string[] = []) {
+    setErrors((prev) => withoutErrorsFor(prev, [lineId, ...cascadeIds]));
     startTransition(async () => {
       applyOptimistic({ type: "remove", lineIds: [lineId, ...cascadeIds] });
-      await removeCartLine(lineId, cascadeIds);
+      const result = await removeCartLine(lineId, cascadeIds);
+      if (!result.success) {
+        setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+      }
     });
   }
 
@@ -113,6 +85,7 @@ export function CartView({ cart }: { cart: Cart }) {
             key={group.parent.id}
             group={group}
             disabled={isPending}
+            errors={errors}
             onUpdate={handleUpdate}
             onRemove={handleRemove}
           />

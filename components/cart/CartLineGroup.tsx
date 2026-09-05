@@ -5,11 +5,13 @@ import { CartLineRow } from "./CartLineRow";
 export function CartLineGroup({
   group,
   disabled,
+  errors,
   onUpdate,
   onRemove,
 }: {
   group: { parent: CartLine; children: CartLine[] };
   disabled: boolean;
+  errors: Record<string, string>;
   onUpdate: (lineId: string, quantity: number, cascadeIds?: string[]) => void;
   onRemove: (lineId: string, cascadeIds?: string[]) => void;
 }) {
@@ -20,6 +22,7 @@ export function CartLineGroup({
       <CartLineRow
         line={group.parent}
         disabled={disabled}
+        error={errors[group.parent.id]}
         onUpdate={(id, quantity) => onUpdate(id, quantity, childIds)}
         onRemove={(id) => onRemove(id, childIds)}
       />
@@ -28,6 +31,7 @@ export function CartLineGroup({
           key={child.id}
           line={child}
           disabled={disabled}
+          error={errors[child.id]}
           indent
           onUpdate={onUpdate}
           onRemove={onRemove}
