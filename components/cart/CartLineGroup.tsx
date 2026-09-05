@@ -1,5 +1,4 @@
-import type { CartLine } from "@/lib/shopify/types";
-
+import type { LineErrors, LineGroup } from "./cart-line-utils";
 import { CartLineRow } from "./CartLineRow";
 
 export function CartLineGroup({
@@ -9,9 +8,9 @@ export function CartLineGroup({
   onUpdate,
   onRemove,
 }: {
-  group: { parent: CartLine; children: CartLine[] };
+  group: LineGroup;
   disabled: boolean;
-  errors: Record<string, string>;
+  errors: LineErrors;
   onUpdate: (lineId: string, quantity: number, cascadeIds?: string[]) => void;
   onRemove: (lineId: string, cascadeIds?: string[]) => void;
 }) {

@@ -36,6 +36,26 @@ export function reduceLines(lines: CartLine[], action: CartLineAction): CartLine
 
 export type LineGroup = { parent: CartLine; children: CartLine[] };
 
+/** Per-line error messages, keyed by cart line id. */
+export type LineErrors = Record<string, string>;
+
+/** Returns `errors` with the given line ids' entries removed (or `errors` itself, unchanged, if none were present). */
+export function withoutErrorsFor(errors: LineErrors, lineIds: string[]): LineErrors {
+  if (lineIds.every((id) => !(id in errors))) {
+    return errors;
+  }
+  const next = { ...errors };
+  for (const id of lineIds) {
+    delete next[id];
+  }
+  return next;
+}
+
+/** Returns `errors` with `lineId` set to `message`. */
+export function withErrorFor(errors: LineErrors, lineId: string, message: string): LineErrors {
+  return { ...errors, [lineId]: message };
+}
+
 /**
  * Groups flat cart lines into parent/addon-child groups for rendering.
  * A line with `parentLineId: null` is a top-level parent; lines that

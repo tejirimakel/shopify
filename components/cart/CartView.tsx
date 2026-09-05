@@ -7,22 +7,14 @@ import { removeCartLine, updateCartLineQuantity } from "@/lib/shopify/cart-actio
 import type { Cart } from "@/lib/shopify/types";
 
 import { CartLineGroup } from "./CartLineGroup";
-import { groupLines, reduceLines } from "./cart-line-utils";
+import {
+  groupLines,
+  reduceLines,
+  withErrorFor,
+  withoutErrorsFor,
+  type LineErrors,
+} from "./cart-line-utils";
 import { CartSummary } from "./CartSummary";
-
-/** Per-line error messages, keyed by cart line id. */
-type LineErrors = Record<string, string>;
-
-function withoutErrorsFor(errors: LineErrors, lineIds: string[]): LineErrors {
-  if (lineIds.every((id) => !(id in errors))) {
-    return errors;
-  }
-  const next = { ...errors };
-  for (const id of lineIds) {
-    delete next[id];
-  }
-  return next;
-}
 
 export function CartView({ cart }: { cart: Cart }) {
   const [optimisticLines, applyOptimistic] = useOptimistic(cart.lines, reduceLines);
@@ -36,14 +28,14 @@ export function CartView({ cart }: { cart: Cart }) {
         applyOptimistic({ type: "remove", lineIds: [lineId, ...cascadeIds] });
         const result = await removeCartLine(lineId, cascadeIds);
         if (!result.success) {
-          setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+          setErrors((prev) => withErrorFor(prev, lineId, result.error));
         }
         return;
       }
       applyOptimistic({ type: "update", lineId, quantity });
       const result = await updateCartLineQuantity(lineId, quantity, cascadeIds);
       if (!result.success) {
-        setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+        setErrors((prev) => withErrorFor(prev, lineId, result.error));
       }
     });
   }
@@ -54,7 +46,7 @@ export function CartView({ cart }: { cart: Cart }) {
       applyOptimistic({ type: "remove", lineIds: [lineId, ...cascadeIds] });
       const result = await removeCartLine(lineId, cascadeIds);
       if (!result.success) {
-        setErrors((prev) => ({ ...prev, [lineId]: result.error }));
+        setErrors((prev) => withErrorFor(prev, lineId, result.error));
       }
     });
   }

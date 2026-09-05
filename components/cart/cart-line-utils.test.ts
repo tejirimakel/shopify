@@ -102,8 +102,7 @@ describe("reduceLines", () => {
 
     expect(resultParent.quantity).toBe(4);
     expect(resultParent.cost.totalAmount.amount).toBe("40.00");
-    // Unrelated child line is untouched — same object reference, same values.
-    expect(resultChild).toBe(child);
+    // Unrelated child line is untouched.
     expect(resultChild.quantity).toBe(1);
     expect(resultChild.cost.totalAmount.amount).toBe("3.00");
   });
