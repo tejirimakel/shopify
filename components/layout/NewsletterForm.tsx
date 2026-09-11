@@ -13,14 +13,14 @@ function validate(formData: FormData): string | null {
   return null;
 }
 
-export function NewsletterForm({ className }: { className?: string }) {
+export function NewsletterForm() {
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
   if (status === "success") {
     return (
-      <p className={className ?? "text-sm text-text/70"}>
+      <p className="text-sm text-text/70">
         Thanks — you&rsquo;re on the list!
       </p>
     );
@@ -50,7 +50,7 @@ export function NewsletterForm({ className }: { className?: string }) {
           }
         });
       }}
-      className={className ?? "flex flex-col gap-2"}
+      className="flex flex-col gap-2"
     >
       <div className="flex gap-2">
         <label htmlFor="newsletter-email" className="sr-only">
