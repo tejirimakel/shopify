@@ -54,7 +54,7 @@ export function AddToCartButton({
       <button
         onClick={handleClick}
         disabled={!variantId || !availableForSale || isPending}
-        className="mt-4 w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
+        className="mt-4 w-full rounded-md bg-primary px-4 py-3 text-sm font-medium text-background transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-8"
       >
         {label}
       </button>

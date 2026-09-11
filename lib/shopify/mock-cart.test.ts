@@ -12,7 +12,7 @@ import {
 } from "./mock-cart";
 
 // Real ids from lib/shopify/mock-data.ts.
-const TOTE_VARIANT_ID = "gid://shopify/ProductVariant/mock-1-1"; // Canvas Tote Bag, $24.00
+const MAIN_VARIANT_ID = "gid://shopify/ProductVariant/mock-4-1"; // Butter Chicken, $24.00
 const RICE_ADDON_ID = "gid://shopify/ProductVariant/mock-addon-rice-1"; // Extra Rice, $2.00
 const SAUCE_ADDON_ID = "gid://shopify/ProductVariant/mock-addon-sauce-1"; // Extra Sauce, $1.00
 const UNKNOWN_VARIANT_ID = "gid://shopify/ProductVariant/does-not-exist";
@@ -27,7 +27,7 @@ describe("mockAddLines", () => {
     const cart = await mockCreateCart();
 
     await expect(
-      mockAddLines(cart.id, [{ merchandiseId: TOTE_VARIANT_ID, quantity: 1.5 }])
+      mockAddLines(cart.id, [{ merchandiseId: MAIN_VARIANT_ID, quantity: 1.5 }])
     ).rejects.toThrow(MockCartError);
   });
 
@@ -35,10 +35,10 @@ describe("mockAddLines", () => {
     const cart = await mockCreateCart();
 
     await expect(
-      mockAddLines(cart.id, [{ merchandiseId: TOTE_VARIANT_ID, quantity: 0 }])
+      mockAddLines(cart.id, [{ merchandiseId: MAIN_VARIANT_ID, quantity: 0 }])
     ).rejects.toThrow(MockCartError);
     await expect(
-      mockAddLines(cart.id, [{ merchandiseId: TOTE_VARIANT_ID, quantity: -1 }])
+      mockAddLines(cart.id, [{ merchandiseId: MAIN_VARIANT_ID, quantity: -1 }])
     ).rejects.toThrow(MockCartError);
   });
 
@@ -52,7 +52,7 @@ describe("mockAddLines", () => {
 
   it("throws MockCartError when the cart id does not exist", async () => {
     await expect(
-      mockAddLines(UNKNOWN_CART_ID, [{ merchandiseId: TOTE_VARIANT_ID, quantity: 1 }])
+      mockAddLines(UNKNOWN_CART_ID, [{ merchandiseId: MAIN_VARIANT_ID, quantity: 1 }])
     ).rejects.toThrow(MockCartError);
   });
 
@@ -60,21 +60,21 @@ describe("mockAddLines", () => {
     const cart = await mockCreateCart();
 
     const updated = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 1 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 1 },
       {
         merchandiseId: RICE_ADDON_ID,
         quantity: 1,
-        parent: { merchandiseId: TOTE_VARIANT_ID },
+        parent: { merchandiseId: MAIN_VARIANT_ID },
       },
       {
         merchandiseId: SAUCE_ADDON_ID,
         quantity: 1,
-        parent: { merchandiseId: TOTE_VARIANT_ID },
+        parent: { merchandiseId: MAIN_VARIANT_ID },
       },
     ]);
 
     expect(updated.lines).toHaveLength(3);
-    const parent = updated.lines.find((l) => l.merchandise.id === TOTE_VARIANT_ID)!;
+    const parent = updated.lines.find((l) => l.merchandise.id === MAIN_VARIANT_ID)!;
     const rice = updated.lines.find((l) => l.merchandise.id === RICE_ADDON_ID)!;
     const sauce = updated.lines.find((l) => l.merchandise.id === SAUCE_ADDON_ID)!;
 
@@ -87,7 +87,7 @@ describe("mockAddLines", () => {
     const cart = await mockCreateCart();
 
     const updated = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 2 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 2 },
     ]);
 
     expect(updated.totalQuantity).toBe(2);
@@ -99,7 +99,7 @@ describe("mockUpdateLines", () => {
   it("throws MockCartError for a non-integer quantity", async () => {
     const cart = await mockCreateCart();
     const withLine = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 1 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 1 },
     ]);
     const lineId = withLine.lines[0].id;
 
@@ -111,7 +111,7 @@ describe("mockUpdateLines", () => {
   it("throws MockCartError for a negative quantity", async () => {
     const cart = await mockCreateCart();
     const withLine = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 1 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 1 },
     ]);
     const lineId = withLine.lines[0].id;
 
@@ -137,7 +137,7 @@ describe("mockUpdateLines", () => {
   it("updates the line quantity and recalculates cost", async () => {
     const cart = await mockCreateCart();
     const withLine = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 1 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 1 },
     ]);
     const lineId = withLine.lines[0].id;
 
@@ -160,11 +160,11 @@ describe("mockRemoveLines", () => {
   it("removes the given lines and recalculates totals", async () => {
     const cart = await mockCreateCart();
     const withLines = await mockAddLines(cart.id, [
-      { merchandiseId: TOTE_VARIANT_ID, quantity: 1 },
+      { merchandiseId: MAIN_VARIANT_ID, quantity: 1 },
       { merchandiseId: RICE_ADDON_ID, quantity: 1 },
     ]);
     const toteLineId = withLines.lines.find(
-      (l) => l.merchandise.id === TOTE_VARIANT_ID
+      (l) => l.merchandise.id === MAIN_VARIANT_ID
     )!.id;
 
     const updated = await mockRemoveLines(cart.id, [toteLineId]);

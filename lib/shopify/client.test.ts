@@ -14,6 +14,7 @@ process.env.SHOPIFY_MOCK_DATA = "false";
 const {
   getProducts,
   getProduct,
+  searchProducts,
   getCart,
   createCart,
   addCartLines,
@@ -62,15 +63,18 @@ function rawVariant(id: string, price = "10.00") {
 
 function rawProduct(overrides?: {
   addons?: { references: { nodes: unknown[] } } | null;
+  handle?: string;
+  createdAt?: string;
 }) {
   return {
     id: "gid://shopify/Product/1",
-    handle: "test-product",
+    handle: overrides?.handle ?? "test-product",
     title: "Test Product",
     description: "A product.",
     descriptionHtml: "<p>A product.</p>",
     productType: "Widgets",
     availableForSale: true,
+    createdAt: overrides?.createdAt ?? "2024-01-01T00:00:00Z",
     options: [{ name: "Title", values: ["Default Title"] }],
     images: { edges: [{ node: rawImage("a") }, { node: rawImage("b") }] },
     variants: { edges: [{ node: rawVariant("gid://shopify/ProductVariant/1") }] },
@@ -79,6 +83,29 @@ function rawProduct(overrides?: {
       minVariantPrice: { amount: "10.00", currencyCode: "USD" },
       maxVariantPrice: { amount: "10.00", currencyCode: "USD" },
     },
+  };
+}
+
+function rawSearchResult(nodes: ReturnType<typeof rawProduct>[]) {
+  return {
+    totalCount: nodes.length,
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      startCursor: null,
+      endCursor: null,
+    },
+    productFilters: [
+      {
+        id: "filter.v.availability",
+        label: "Availability",
+        type: "LIST",
+        values: [
+          { id: "a", label: "In stock", count: nodes.length, input: '{"available":true}' },
+        ],
+      },
+    ],
+    nodes,
   };
 }
 
@@ -352,5 +379,56 @@ describe("getCart's catch behavior", () => {
     vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("network down")));
 
     await expect(getCart("gid://shopify/Cart/stale-id")).resolves.toBeNull();
+  });
+});
+
+describe("searchProducts", () => {
+  it("returns products/totalCount/pageInfo/facets from the search response", async () => {
+    const product = rawProduct();
+    stubFetchResolved({ data: { search: rawSearchResult([product]) } });
+
+    const result = await searchProducts({ query: "dosai" });
+
+    expect(result.products).toHaveLength(1);
+    expect(result.products[0].handle).toBe("test-product");
+    expect(result.totalCount).toBe(1);
+    expect(result.pageInfo).toEqual({
+      hasNextPage: false,
+      hasPreviousPage: false,
+      startCursor: null,
+      endCursor: null,
+    });
+    expect(result.facets).toHaveLength(1);
+    expect(result.facets[0].label).toBe("Availability");
+  });
+
+  it("sends '*' as the query when none is given (browse-all)", async () => {
+    stubFetchResolved({ data: { search: rawSearchResult([rawProduct()]) } });
+
+    await searchProducts({});
+
+    const [, requestInit] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.variables.query).toBe("*");
+  });
+
+  it("drops a malformed filter string instead of throwing", async () => {
+    stubFetchResolved({ data: { search: rawSearchResult([rawProduct()]) } });
+
+    await searchProducts({ filters: ["not json", '{"available":true}'] });
+
+    const [, requestInit] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    const body = JSON.parse(requestInit.body as string);
+    expect(body.variables.productFilters).toEqual([{ available: true }]);
+  });
+
+  it("re-sorts the fetched page by createdAt descending when sort is 'newest'", async () => {
+    const older = rawProduct({ handle: "older", createdAt: "2024-01-01T00:00:00Z" });
+    const newer = rawProduct({ handle: "newer", createdAt: "2024-06-01T00:00:00Z" });
+    stubFetchResolved({ data: { search: rawSearchResult([older, newer]) } });
+
+    const result = await searchProducts({ sort: "newest" });
+
+    expect(result.products.map((p) => p.handle)).toEqual(["newer", "older"]);
   });
 });

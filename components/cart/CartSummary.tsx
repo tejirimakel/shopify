@@ -20,7 +20,7 @@ export function CartSummary({
       {checkoutUrl ? (
         <a
           href={checkoutUrl}
-          className="w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-white transition-colors hover:opacity-90"
+          className="w-full rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-background transition-colors hover:opacity-90"
         >
           Checkout
         </a>
@@ -28,7 +28,7 @@ export function CartSummary({
         <div>
           <button
             disabled
-            className="w-full cursor-not-allowed rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-white opacity-50"
+            className="w-full cursor-not-allowed rounded-md bg-primary px-4 py-3 text-center text-sm font-medium text-background opacity-50"
           >
             Checkout
           </button>
