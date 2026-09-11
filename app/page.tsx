@@ -158,7 +158,7 @@ export default async function Home() {
               {[...dishes, ...dishes].map((dish, i) => (
                 <span
                   key={`${dish}-${i}`}
-                  className="flex items-center gap-10 text-xs uppercase tracking-[0.2em] text-text/40"
+                  className="flex items-center gap-10 text-xs uppercase tracking-[0.2em] text-text/60"
                 >
                   {dish}
                   <span aria-hidden="true" className="text-primary/50">

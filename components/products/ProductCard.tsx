@@ -49,7 +49,7 @@ export function ProductCard({
             <p className="line-clamp-2 text-sm text-text/60">{product.description}</p>
           )}
           <div className="mt-auto flex items-center justify-between pt-3">
-            <span className="text-xs uppercase tracking-widest text-text/40">
+            <span className="text-xs uppercase tracking-widest text-text/60">
               {product.productType}
             </span>
             <span className="text-xs font-semibold uppercase tracking-widest text-primary group-hover:opacity-80">
