@@ -1,36 +1,109 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WordPress → Next.js + Shopify Migration
+
+## Overview
+
+Proof-of-concept migration of a WordPress/WooCommerce
+storefront to a headless Next.js application backed by Shopify.
+
+## Objective
+
+Demonstrate the architecture and implementation approach
+for migrating a WordPress commerce experience to:
+
+- Next.js App Router
+- TypeScript
+- Shopify Storefront API
+- React Server Components
+
+## Migration Scope
+
+For demonstration purposes, eight products were migrated
+from the existing WordPress/WooCommerce environment.
+
+## Architecture
+
+WordPress/WooCommerce
+        ↓
+Product Export
+        ↓
+Data Transformation
+        ↓
+Shopify
+        ↓
+Storefront API
+        ↓
+Next.js App Router
+
+## Features
+
+- Product listing
+- Dynamic product pages
+- Shopify Storefront API integration
+- Product image optimization
+- Shopify cart
+- Shopify checkout
+- Dynamic SEO metadata
+- Loading states
+- Not-found handling
+- Responsive UI
+
+## Migration Decisions
+
+used shopify inbuilt data importer for syncing products and credentials from woo commerce in csv format
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Node.js 20+
+- A Shopify store with the Storefront API enabled, and a Storefront API access token
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Setup
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Install dependencies:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+   ```bash
+   npm install
+   ```
 
-## Learn More
+2. Copy the example environment file and fill in your Shopify credentials:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   cp .env.example .env.local
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Start the dev server:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. Visit `/api/health/shopify` and confirm `{ "ok": true }` before relying on live product data.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Defined in `.env.example`; copy it to `.env.local` and set:
+
+| Variable | Required | Purpose |
+| --- | --- | --- |
+| `SHOPIFY_STORE_DOMAIN` | Yes (unless using mock data) | Your store's domain, e.g. `your-store.myshopify.com` — no protocol needed. |
+| `SHOPIFY_STOREFRONT_ACCESS_TOKEN` | Yes (unless using mock data) | Storefront API access token. |
+| `SHOPIFY_API_VERSION` | No | Storefront API version to pin to. Defaults to `2024-01`. After changing this, hit `/api/health/shopify` and confirm `ok: true`. |
+| `SHOPIFY_MOCK_DATA` | No | Set to `true` to run against bundled mock product/cart data instead of a live store — see below. Defaults to `false`. |
+| `SHOPIFY_REVALIDATE_SECONDS` | No | Seconds product data is cached before revalidating. Lower means fresher data after editing products in Shopify admin, at the cost of more requests. Defaults to `30`. |
+
+If `SHOPIFY_STORE_DOMAIN` or `SHOPIFY_STOREFRONT_ACCESS_TOKEN` is missing while `SHOPIFY_MOCK_DATA` is not `true`, pages render a "not configured correctly" notice rather than a generic error, so a missing credential is easy to tell apart from a real Shopify outage.
+
+### Mock Data Mode
+
+Setting `SHOPIFY_MOCK_DATA=true` in `.env.local` swaps every product and cart operation (`lib/shopify/client.ts`) over to the fixtures in `lib/shopify/mock-data.ts` and `lib/shopify/mock-cart.ts`, with no network calls to Shopify. Useful for offline development or as a demo fallback when a live store isn't reachable. Production code paths never hardcode product data outside of this explicit opt-in mode.
+
+### Commands
+
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Start the development server. |
+| `npm run build` | Create a production build. |
+| `npm run start` | Run the production build (run `npm run build` first). |
+| `npm run test` | Run the Vitest test suite. |
+| `npm run lint` | Run ESLint. |
