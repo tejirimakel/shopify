@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 
 import { PriceRangeFilter } from "@/components/products/PriceRangeFilter";
 import {
@@ -22,6 +22,65 @@ export function ProductFilters({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+
+  // Focus trap + Escape-to-close + focus restoration for the drawer. Runs a
+  // single keydown listener while the drawer is open and cleans it up (and
+  // returns focus to the trigger button) whenever `isOpen` flips back to
+  // false, regardless of which of the three close paths (Escape, overlay
+  // click, "×" button) caused it.
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const getFocusable = () =>
+      Array.from(
+        panel.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+      ).filter((element) => !element.hasAttribute("disabled"));
+
+    const initial = getFocusable()[0];
+    (initial ?? panel).focus();
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsOpen(false);
+        return;
+      }
+
+      if (event.key !== "Tab") return;
+
+      const focusable = getFocusable();
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey) {
+        if (active === first || !panel?.contains(active)) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !panel?.contains(active)) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    const trigger = triggerRef.current;
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      trigger?.focus();
+    };
+  }, [isOpen]);
 
   // Checkboxes are controlled by `state.filters`, which only updates once the
   // navigation below actually completes and the server re-renders with new
@@ -93,6 +152,7 @@ export function ProductFilters({
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => setIsOpen(true)}
         aria-label="Filter by availability and price"
@@ -117,7 +177,11 @@ export function ProductFilters({
             onClick={() => setIsOpen(false)}
             aria-hidden="true"
           />
-          <div className="relative ml-auto flex h-full w-full max-w-xs flex-col gap-4 overflow-y-auto bg-surface p-6">
+          <div
+            ref={panelRef}
+            tabIndex={-1}
+            className="relative ml-auto flex h-full w-full max-w-xs flex-col gap-4 overflow-y-auto bg-surface p-6"
+          >
             <div className="flex items-center justify-between">
               <h2 className="text-base font-semibold text-text">Filters</h2>
               <button
