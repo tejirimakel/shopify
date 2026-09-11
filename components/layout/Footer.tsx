@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { NewsletterForm } from "./NewsletterForm";
 
 const navigate = [
   { href: "/", label: "Home" },
@@ -64,23 +65,7 @@ export function Footer() {
           <p className="text-sm text-text/60">
             Specials, new dishes, and events — delivered to your inbox.
           </p>
-          <form className="flex gap-2">
-            <label htmlFor="newsletter-email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="newsletter-email"
-              type="email"
-              placeholder="your@email.com"
-              className="min-w-0 flex-1 rounded-sm border border-border bg-background px-3 py-2 text-sm text-text placeholder:text-text/40 focus:border-primary focus:outline-none"
-            />
-            <button
-              type="submit"
-              className="rounded-sm bg-primary px-4 py-2 text-xs font-semibold uppercase tracking-widest text-background transition-colors hover:opacity-90"
-            >
-              Join
-            </button>
-          </form>
+          <NewsletterForm />
         </div>
       </div>
 
