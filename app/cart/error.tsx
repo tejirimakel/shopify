@@ -9,7 +9,7 @@ export default function CartError({
   return (
     <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 px-4 py-24 text-center sm:px-6">
       <h1 className="text-xl font-semibold text-text">We couldn&apos;t load your cart</h1>
-      <p className="max-w-md text-sm text-text/60">
+      <p role="alert" className="max-w-md text-sm text-text/60">
         Something went wrong loading your cart. Please try again in a moment.
       </p>
       <button
