@@ -46,7 +46,7 @@ export function ActiveFilters({
       {hasQuery && (
         <Link
           href={buildSearchHref(state, { query: "" })}
-          className="rounded-full border border-border px-3 py-1 text-text/80 hover:border-primary"
+          className="flex min-h-11 items-center rounded-full border border-border px-3 py-1 text-text/80 hover:border-primary"
         >
           &quot;{state.query}&quot; ×
         </Link>
@@ -55,14 +55,14 @@ export function ActiveFilters({
         <Link
           key={filter}
           href={buildSearchHref(state, { filters: toggleFilterInput(state.filters, filter) })}
-          className="rounded-full border border-border px-3 py-1 text-text/80 hover:border-primary"
+          className="flex min-h-11 items-center rounded-full border border-border px-3 py-1 text-text/80 hover:border-primary"
         >
           {labelFor(facets, filter)} ×
         </Link>
       ))}
       <Link
         href={buildSearchHref(state, { filters: [] })}
-        className="text-text/60 underline-offset-2 hover:text-error hover:underline"
+        className="flex min-h-11 items-center px-2 text-text/60 underline-offset-2 hover:text-error hover:underline"
       >
         Clear filters
       </Link>

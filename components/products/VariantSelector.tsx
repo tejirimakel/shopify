@@ -55,7 +55,7 @@ export function VariantSelector({
                   aria-pressed={selected}
                   aria-label={available ? value : `${value} (sold out)`}
                   onClick={() => onSelect(option.name, value)}
-                  className={`rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                  className={`flex min-h-11 items-center justify-center rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
                     selected
                       ? "border-primary bg-primary text-background"
                       : "border-border bg-surface text-text hover:border-primary"

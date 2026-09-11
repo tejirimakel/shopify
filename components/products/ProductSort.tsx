@@ -14,7 +14,9 @@ export function ProductSort({ state }: { state: ProductSearchState }) {
               <Link
                 href={buildSearchHref(state, { sort: option.value })}
                 aria-current={active ? "true" : undefined}
-                className={active ? "font-medium text-primary" : "text-text/70 hover:text-text"}
+                className={`flex min-h-11 items-center px-2 ${
+                  active ? "font-medium text-primary" : "text-text/70 hover:text-text"
+                }`}
               >
                 {option.label}
               </Link>
