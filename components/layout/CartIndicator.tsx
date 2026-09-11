@@ -24,7 +24,7 @@ export function CartIndicator({ count = 0 }: { count?: number }) {
         <circle cx="17.25" cy="20.25" r="1" />
       </svg>
       {count > 0 && (
-        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white">
+        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-background">
           {count > 9 ? "9+" : count}
         </span>
       )}

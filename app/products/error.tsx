@@ -11,12 +11,12 @@ export default function ProductsError({
       <h1 className="text-xl font-semibold text-text">
         We couldn&apos;t load the shop
       </h1>
-      <p className="max-w-md text-sm text-text/60">
+      <p role="alert" className="max-w-md text-sm text-text/60">
         Something went wrong talking to our store. Please try again in a moment.
       </p>
       <button
         onClick={reset}
-        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:opacity-90"
+        className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-background transition-colors hover:opacity-90"
       >
         Try again
       </button>

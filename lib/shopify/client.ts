@@ -6,6 +6,7 @@ import {
   mockRemoveLines,
   mockUpdateLines,
 } from "./mock-cart";
+import { mockSearchProducts } from "./mock-search";
 import {
   CART_CREATE_MUTATION,
   CART_LINES_ADD_MUTATION,
@@ -13,15 +14,20 @@ import {
   CART_LINES_UPDATE_MUTATION,
   CART_QUERY,
 } from "./mutations";
-import { PRODUCT_QUERY, PRODUCTS_QUERY } from "./queries";
+import { SORT_OPTIONS } from "./product-search";
+import { PRODUCT_QUERY, PRODUCTS_QUERY, SEARCH_PRODUCTS_QUERY } from "./queries";
 import {
   SPECIAL_INSTRUCTIONS_ATTRIBUTE_KEY,
   type AddonVariant,
   type Cart,
   type CartLine,
   type Connection,
+  type PageInfo,
   type Product,
+  type ProductFacet,
   type ProductQueryResponse,
+  type ProductSearchResult,
+  type ProductSort,
   type ProductsQueryResponse,
   type ShopifyErrorLike,
 } from "./types";
@@ -181,6 +187,70 @@ export async function getProducts(first = 20): Promise<Product[]> {
     { revalidateSeconds: PRODUCT_REVALIDATE_SECONDS, tags: ["products"] }
   );
   return data.products.edges.map((edge) => normalizeProduct(edge.node));
+}
+
+type RawSearchResponse = {
+  search: {
+    totalCount: number;
+    pageInfo: PageInfo;
+    productFilters: ProductFacet[];
+    nodes: RawProduct[];
+  };
+};
+
+export async function searchProducts(params: {
+  query?: string;
+  filters?: string[];
+  sort?: ProductSort;
+  first?: number;
+  after?: string | null;
+}): Promise<ProductSearchResult> {
+  if (USE_MOCK_DATA) {
+    return mockSearchProducts(params);
+  }
+
+  const sortOption =
+    SORT_OPTIONS.find((option) => option.value === params.sort) ?? SORT_OPTIONS[0];
+
+  const productFilters = (params.filters ?? [])
+    .map((raw) => {
+      try {
+        return JSON.parse(raw) as Record<string, unknown>;
+      } catch {
+        // Hand-edited/stale URL — drop the unparseable filter rather than failing the page.
+        return null;
+      }
+    })
+    .filter((filter): filter is Record<string, unknown> => filter !== null);
+
+  const data = await shopifyFetch<RawSearchResponse>(
+    SEARCH_PRODUCTS_QUERY,
+    {
+      query: params.query?.trim() || "*",
+      productFilters,
+      sortKey: sortOption.sortKey,
+      reverse: sortOption.reverse,
+      first: params.first ?? 20,
+      after: params.after ?? null,
+    },
+    { revalidateSeconds: PRODUCT_REVALIDATE_SECONDS, tags: ["products"] }
+  );
+
+  let products = data.search.nodes.map(normalizeProduct);
+  if (params.sort === "newest") {
+    // Shopify's search() has no CREATED_AT sort key (only RELEVANCE/PRICE) — re-order the
+    // already-fetched page client-side instead of fetching-then-filtering the whole catalog.
+    products = [...products].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }
+
+  return {
+    products,
+    totalCount: data.search.totalCount,
+    pageInfo: data.search.pageInfo,
+    facets: data.search.productFilters,
+  };
 }
 
 export async function getProduct(handle: string): Promise<Product | null> {

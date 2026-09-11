@@ -33,6 +33,7 @@ export type Product = {
   descriptionHtml: string;
   productType: string;
   availableForSale: boolean;
+  createdAt: string;
   options: { name: string; values: string[] }[];
   images: ShopifyImage[];
   variants: ProductVariant[];
@@ -53,6 +54,37 @@ export type ProductsQueryResponse = {
 
 export type ProductQueryResponse = {
   product: Product | null;
+};
+
+export type PageInfo = {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  startCursor: string | null;
+  endCursor: string | null;
+};
+
+export type ProductFacetValue = {
+  id: string;
+  label: string;
+  count: number;
+  /** Opaque JSON string matching Shopify's `ProductFilter` input shape, round-tripped verbatim into the next search query. */
+  input: string;
+};
+
+export type ProductFacet = {
+  id: string;
+  label: string;
+  type: "LIST" | "PRICE_RANGE";
+  values: ProductFacetValue[];
+};
+
+export type ProductSort = "featured" | "price-asc" | "price-desc" | "newest";
+
+export type ProductSearchResult = {
+  products: Product[];
+  totalCount: number;
+  pageInfo: PageInfo;
+  facets: ProductFacet[];
 };
 
 export type ShopifyErrorLike = {
