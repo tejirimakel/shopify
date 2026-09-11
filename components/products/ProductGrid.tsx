@@ -8,10 +8,12 @@ export function ProductGrid({
   products,
   emptyMessage,
   clearFiltersHref,
+  productHeadingLevel,
 }: {
   products: Product[];
   emptyMessage?: string;
   clearFiltersHref?: string;
+  productHeadingLevel: "h2" | "h3";
 }) {
   if (products.length === 0) {
     return (
@@ -33,7 +35,7 @@ export function ProductGrid({
   return (
     <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3 lg:grid-cols-4">
       {products.map((product) => (
-        <ProductCard key={product.id} product={product} />
+        <ProductCard key={product.id} product={product} headingLevel={productHeadingLevel} />
       ))}
     </ul>
   );

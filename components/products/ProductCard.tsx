@@ -5,7 +5,15 @@ import type { Product } from "@/lib/shopify/types";
 import { formatMoney } from "./price";
 import { ProductImage } from "./ProductImage";
 
-export function ProductCard({ product }: { product: Product }) {
+export function ProductCard({
+  product,
+  headingLevel,
+}: {
+  product: Product;
+  headingLevel: "h2" | "h3";
+}) {
+  const HeadingTag = headingLevel;
+
   return (
     <li className="group">
       <Link
@@ -30,9 +38,9 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
         <div className="flex flex-1 flex-col gap-2 p-4">
           <div className="flex items-baseline justify-between gap-2">
-            <h2 className="font-display text-lg text-secondary group-hover:text-primary">
+            <HeadingTag className="font-display text-lg text-secondary group-hover:text-primary">
               {product.title}
-            </h2>
+            </HeadingTag>
             <p className="whitespace-nowrap text-sm text-text/70">
               {formatMoney(product.priceRange.minVariantPrice)}
             </p>

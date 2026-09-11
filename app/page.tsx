@@ -296,7 +296,7 @@ export default async function Home() {
             </div>
             <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard key={product.id} product={product} headingLevel="h3" />
               ))}
             </ul>
           </div>

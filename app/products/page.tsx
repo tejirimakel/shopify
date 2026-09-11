@@ -110,6 +110,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
           products={result.products}
           emptyMessage={hasActiveSearch ? "No products match your search." : undefined}
           clearFiltersHref={hasActiveSearch ? buildSearchHref(state, { query: "", filters: [] }) : undefined}
+          productHeadingLevel="h3"
         />
       </div>
 
