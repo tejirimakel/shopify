@@ -77,3 +77,27 @@ export function isProductTypeFilterInput(raw: string): boolean {
     return false;
   }
 }
+
+/** Whether a filter's opaque `input` JSON string is a price filter. */
+export function isPriceFilter(raw: string): boolean {
+  try {
+    return "price" in JSON.parse(raw);
+  } catch {
+    return false;
+  }
+}
+
+/** Finds the first price filter among `filters` and returns its range, or `null` if none exists. */
+export function parseActivePriceRange(filters: string[]): { min?: number; max?: number } | null {
+  for (const raw of filters) {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && parsed.price) {
+        return parsed.price;
+      }
+    } catch {
+      // ignore malformed filter
+    }
+  }
+  return null;
+}

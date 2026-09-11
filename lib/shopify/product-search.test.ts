@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildSearchHref,
+  isPriceFilter,
+  parseActivePriceRange,
   parseProductSearchParams,
   toggleFilterInput,
 } from "./product-search";
@@ -87,5 +89,43 @@ describe("toggleFilterInput", () => {
 
   it("removes an input already present", () => {
     expect(toggleFilterInput(["a", "b"], "a")).toEqual(["b"]);
+  });
+});
+
+describe("isPriceFilter", () => {
+  it("is true for a price filter input", () => {
+    expect(isPriceFilter('{"price":{"min":5,"max":20}}')).toBe(true);
+  });
+
+  it("is false for a non-price filter input", () => {
+    expect(isPriceFilter('{"productType":"Mains"}')).toBe(false);
+  });
+
+  it("is false for malformed JSON", () => {
+    expect(isPriceFilter("not json")).toBe(false);
+  });
+});
+
+describe("parseActivePriceRange", () => {
+  it("returns the parsed range when a price filter is present", () => {
+    expect(parseActivePriceRange(['{"price":{"min":5,"max":20}}'])).toEqual({ min: 5, max: 20 });
+  });
+
+  it("returns null for empty filters", () => {
+    expect(parseActivePriceRange([])).toBeNull();
+  });
+
+  it("returns null when no entry is a price filter", () => {
+    expect(parseActivePriceRange(['{"productType":"Mains"}', '{"available":true}'])).toBeNull();
+  });
+
+  it("returns null when the only price-like entry is malformed JSON", () => {
+    expect(parseActivePriceRange(["not json"])).toBeNull();
+  });
+
+  it("returns the first match when more than one price filter is present", () => {
+    expect(
+      parseActivePriceRange(['{"price":{"min":5}}', '{"price":{"min":10,"max":30}}'])
+    ).toEqual({ min: 5 });
   });
 });

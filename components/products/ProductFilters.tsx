@@ -5,33 +5,13 @@ import { useOptimistic, useRef, useState, useTransition } from "react";
 
 import {
   buildSearchHref,
+  isPriceFilter,
   isProductTypeFilterInput,
+  parseActivePriceRange,
   toggleFilterInput,
   type ProductSearchState,
 } from "@/lib/shopify/product-search";
 import type { ProductFacet } from "@/lib/shopify/types";
-
-function isPriceFilter(raw: string): boolean {
-  try {
-    return "price" in JSON.parse(raw);
-  } catch {
-    return false;
-  }
-}
-
-function parseActivePriceRange(filters: string[]): { min?: number; max?: number } | null {
-  for (const raw of filters) {
-    try {
-      const parsed = JSON.parse(raw);
-      if (parsed && typeof parsed === "object" && parsed.price) {
-        return parsed.price;
-      }
-    } catch {
-      // ignore malformed filter
-    }
-  }
-  return null;
-}
 
 export function ProductFilters({
   state,
