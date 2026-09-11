@@ -2,7 +2,7 @@ import Link from "next/link";
 
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductImage } from "@/components/products/ProductImage";
-import { ShopifyConfigError, getProducts, searchProducts } from "@/lib/shopify/client";
+import { ShopifyConfigError, searchProducts } from "@/lib/shopify/client";
 import type { Product } from "@/lib/shopify/types";
 
 function categoryHref(productType: string): string {
@@ -76,20 +76,8 @@ const testimonials = [
 
 async function getFeaturedProducts(): Promise<Product[]> {
   try {
-    const result = await searchProducts({ sort: "featured", first: 4 });
+    const result = await searchProducts({ sort: "featured", first: 12 });
     return result.products;
-  } catch (error) {
-
-    if (error instanceof ShopifyConfigError) {
-      return [];
-    }
-    throw error;
-  }
-}
-
-async function getShowcaseProducts(): Promise<Product[]> {
-  try {
-    return await getProducts(50);
   } catch (error) {
     if (error instanceof ShopifyConfigError) {
       return [];
@@ -99,20 +87,16 @@ async function getShowcaseProducts(): Promise<Product[]> {
 }
 
 export default async function Home() {
-  const [featuredProducts, showcaseProducts] = await Promise.all([
-    getFeaturedProducts(),
-    getShowcaseProducts(),
-  ]);
-
-  const dishes = showcaseProducts.map((product) => product.title);
+  const products = await getFeaturedProducts();
+  const featuredProducts = products.slice(0, 4);
+  const dishes = products.map((product) => product.title);
 
   const menuCategories = MENU_CATEGORY_DEFS.map((category) => ({
     ...category,
     href: categoryHref(category.productType),
     image:
-      showcaseProducts.find(
-        (product) => product.productType === category.productType
-      )?.images[0] ?? null,
+      products.find((product) => product.productType === category.productType)
+        ?.images[0] ?? null,
   }));
 
   return (
