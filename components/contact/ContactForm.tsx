@@ -49,9 +49,11 @@ export function ContactForm() {
           setError(validationError);
           return;
         }
+        setStatus("idle");
         setError(null);
         startTransition(async () => {
           try {
+            // Simulated network call — no backend exists yet; replace when a real submit endpoint is wired up
             await new Promise((resolve) => setTimeout(resolve, 600));
             setStatus("success");
           } catch {
