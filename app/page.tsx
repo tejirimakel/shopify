@@ -1,8 +1,9 @@
+import { Suspense } from "react";
 import Link from "next/link";
 
 import { ProductCard } from "@/components/products/ProductCard";
 import { ProductImage } from "@/components/products/ProductImage";
-import { ShopifyConfigError, searchProducts } from "@/lib/shopify/client";
+import { searchProducts } from "@/lib/shopify/client";
 import type { Product } from "@/lib/shopify/types";
 
 function categoryHref(productType: string): string {
@@ -74,31 +75,16 @@ const testimonials = [
   },
 ];
 
-async function getFeaturedProducts(): Promise<Product[]> {
-  try {
-    const result = await searchProducts({ sort: "featured", first: 12 });
-    return result.products;
-  } catch (error) {
-    if (error instanceof ShopifyConfigError) {
-      return [];
-    }
-    throw error;
-  }
-}
+const tickerDishes = [
+  "Kari Dosai",
+  "Sukku Malli Kaapi",
+  "South Indian Biryani",
+  "Masala Dosa",
+  "Traditional Sambar",
+];
 
+export default function Home() {
 
-export default async function Home() {
-  const products = await getFeaturedProducts();
-  const featuredProducts = products.slice(0, 4);
-  const dishes = products.map((product) => product.title);
-
-  const menuCategories = MENU_CATEGORY_DEFS.map((category) => ({
-    ...category,
-    href: categoryHref(category.productType),
-    image:
-      products.find((product) => product.productType === category.productType)
-        ?.images[0] ?? null,
-  }));
 
   return (
     <>
@@ -137,23 +123,21 @@ export default async function Home() {
         </div>
 
         {/* Dish ticker */}
-        {dishes.length > 0 && (
-          <div className="relative border-t border-border bg-surface py-3">
-            <div className="flex w-max animate-[marquee_32s_linear_infinite] gap-10">
-              {[...dishes, ...dishes].map((dish, i) => (
-                <span
-                  key={`${dish}-${i}`}
-                  className="flex items-center gap-10 text-xs uppercase tracking-[0.2em] text-text/60"
-                >
-                  {dish}
-                  <span aria-hidden="true" className="text-primary/50">
-                    &middot;
-                  </span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
+        <div className="relative border-t border-border bg-surface py-3">
+  <div className="flex w-max animate-[marquee_32s_linear_infinite] gap-10">
+    {[...tickerDishes, ...tickerDishes].map((dish, i) => (
+      <span
+        key={`${dish}-${i}`}
+        className="flex items-center gap-10 text-xs uppercase tracking-[0.2em] text-text/60"
+      >
+        {dish}
+        <span aria-hidden="true" className="text-primary/50">
+          &middot;
+        </span>
+      </span>
+    ))}
+  </div>
+</div>
       </section>
 
       {/* Our Story */}
@@ -206,87 +190,14 @@ export default async function Home() {
       </section>
 
       {/* What We Serve */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-          <div className="flex flex-wrap items-end justify-between gap-4 pb-10">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Our Menu
-              </p>
-              <h2 className="font-display text-4xl text-secondary sm:text-5xl">
-                What we serve
-              </h2>
-            </div>
-            <Link
-              href="/products"
-              className="text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-80"
-            >
-              Full Menu &rarr;
-            </Link>
-          </div>
-          <div className="grid gap-6 sm:grid-cols-3">
-            {menuCategories.map((category) => (
-              <Link
-                key={category.title}
-                href={category.href}
-                className="group flex flex-col gap-4 rounded-md border border-border bg-surface p-5 transition-colors hover:border-primary"
-              >
-                <div
-                  className={`relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-gradient-to-br ${category.gradient}`}
-                >
-                  {category.image && (
-                    <ProductImage
-                      src={category.image.url}
-                      alt={category.image.altText ?? category.title}
-                      sizes="(min-width: 640px) 33vw, 100vw"
-                    />
-                  )}
-                </div>
-                <div>
-                  <h3 className="font-display text-xl text-secondary">
-                    {category.title}
-                  </h3>
-                  <p className="mt-1 text-sm text-text/60">
-                    {category.description}
-                  </p>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-widest text-primary group-hover:opacity-80">
-                  View Menu &rarr;
-                </span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+      <Suspense fallback={<MenuCategoriesSection />}>
+        <MenuCategoriesSection />
+      </Suspense>
 
       {/* Featured Dishes */}
-      {featuredProducts.length > 0 && (
-        <section className="border-b border-border bg-surface">
-          <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
-            <div className="flex flex-wrap items-end justify-between gap-4 pb-10">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                  Order Online
-                </p>
-                <h2 className="font-display text-4xl text-secondary sm:text-5xl">
-                  Fan favourites
-                </h2>
-              </div>
-              <Link
-                href="/products"
-                className="text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-80"
-              >
-                Shop All &rarr;
-              </Link>
-            </div>
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} headingLevel="h3" />
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
+      <Suspense fallback={<FeaturedDishesSection />}>
+        <FeaturedDishesSection />
+      </Suspense>
 
       {/* Why Madhura Kitchen */}
       <section className="border-b border-border">
@@ -436,5 +347,146 @@ function UsersIcon({ className }: { className?: string }) {
       <path strokeLinecap="round" strokeLinejoin="round" d="M15 6.5a3 3 0 0 1 0 5.8" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 20c0-2.8-1.8-5.2-4.5-5.9" />
     </svg>
+  );
+}
+
+async function MenuCategoriesSection() {
+  let products: Product[] = [];
+
+  try {
+    const result = await searchProducts({
+      sort: "featured",
+      first: 12,
+    });
+
+    products = result.products;
+  } catch (error) {
+    console.error("Homepage menu categories unavailable:", error);
+  }
+
+  const menuCategories = MENU_CATEGORY_DEFS.map((category) => ({
+    ...category,
+    href: categoryHref(category.productType),
+    image:
+      products.find(
+        (product) => product.productType === category.productType
+      )?.images[0] ?? null,
+  }));
+
+  return (
+    <section className="border-b border-border">
+      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4 pb-10">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              Our Menu
+            </p>
+
+            <h2 className="font-display text-4xl text-secondary sm:text-5xl">
+              What we serve
+            </h2>
+          </div>
+
+          <Link
+            href="/products"
+            className="text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-80"
+          >
+            Full Menu &rarr;
+          </Link>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-3">
+          {menuCategories.map((category) => (
+            <Link
+              key={category.title}
+              href={category.href}
+              className="group flex flex-col gap-4 rounded-md border border-border bg-surface p-5 transition-colors hover:border-primary"
+            >
+              <div
+                className={`relative aspect-[4/3] w-full overflow-hidden rounded-sm bg-gradient-to-br ${category.gradient}`}
+              >
+                {category.image && (
+                  <ProductImage
+                    src={category.image.url}
+                    alt={category.image.altText ?? category.title}
+                    sizes="(min-width: 640px) 33vw, 100vw"
+                  />
+                )}
+              </div>
+
+              <div>
+                <h3 className="font-display text-xl text-secondary">
+                  {category.title}
+                </h3>
+
+                <p className="mt-1 text-sm text-text/60">
+                  {category.description}
+                </p>
+              </div>
+
+              <span className="text-xs font-semibold uppercase tracking-widest text-primary group-hover:opacity-80">
+                View Menu &rarr;
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+async function FeaturedDishesSection() {
+  let products: Product[] = [];
+
+  try {
+    const result = await searchProducts({
+      sort: "featured",
+      first: 12,
+    });
+
+    products = result.products.slice(0, 4);
+  } catch (error) {
+    console.error("Homepage featured products unavailable:", error);
+
+    return null;
+  }
+
+  if (products.length === 0) {
+    return null;
+  }
+
+  return (
+    <section className="border-b border-border bg-surface">
+      <div className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
+        <div className="flex flex-wrap items-end justify-between gap-4 pb-10">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">
+              Order Online
+            </p>
+
+            <h2 className="font-display text-4xl text-secondary sm:text-5xl">
+              Fan favourites
+            </h2>
+          </div>
+
+          <Link
+            href="/products"
+            className="text-xs font-semibold uppercase tracking-widest text-primary hover:opacity-80"
+          >
+            Shop All &rarr;
+          </Link>
+        </div>
+
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-4">
+          {products.map((product) => (
+            <ProductCard
+              key={product.id}
+              product={product}
+              headingLevel="h3"
+            />
+          ))}
+        </ul>
+      </div>
+    </section>
   );
 }
