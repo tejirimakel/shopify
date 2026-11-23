@@ -86,6 +86,7 @@ async function getFeaturedProducts(): Promise<Product[]> {
   }
 }
 
+
 export default async function Home() {
   const products = await getFeaturedProducts();
   const featuredProducts = products.slice(0, 4);
