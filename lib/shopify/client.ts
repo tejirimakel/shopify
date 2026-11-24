@@ -131,9 +131,19 @@ async function shopifyFetch<T>(
   }
 
   if (!response.ok) {
+    const responseBody = await response.text();
+  
+    console.error("Shopify API HTTP Error:", {
+      status: response.status,
+      statusText: response.statusText,
+      endpoint,
+      body: responseBody.slice(0, 2000),
+    });
+  
     throw new ShopifyApiError(
       `Shopify API responded with ${response.status}`,
-      response.status
+      response.status,
+      responseBody
     );
   }
 
